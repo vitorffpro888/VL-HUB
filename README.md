@@ -7,254 +7,165 @@ local Window = Fluent:CreateWindow({
     SubTitle = "by vitor and lucas!",
     TabWidth = 160,
     Size = UDim2.fromOffset(580, 460),
-    Acrylic = true, -- The blur may be detectable, setting this to false disables blur entirely
+    Acrylic = true,
     Theme = "Dark",
-    MinimizeKey = Enum.KeyCode.LeftControl -- Used when theres no MinimizeKeybind
+    MinimizeKey = Enum.KeyCode.LeftControl
 })
 
---Fluent provides Lucide Icons https://lucide.dev/icons/ for the tabs, icons are optional
 local Tabs = {
-    Main = Window:AddTab({ Title = "Main", Icon = "" }),
-    Settings = Window:AddTab({ Title = "Settings", Icon = "settings" })
+    Farm = Window:AddTab({ Title = "Farm", Icon = "sword" }),
+    Quests = Window:AddTab({ Title = "Quests", Icon = "book-open" }),
+    Extras = Window:AddTab({ Title = "Extras", Icon = "star" }),
+    Config = Window:AddTab({ Title = "Config", Icon = "settings" })
 }
 
 local Options = Fluent.Options
 
-do
-    Fluent:Notify({
-        Title = "Notification",
-        Content = "This is a notification",
-        SubContent = "SubContent", -- Optional
-        Duration = 5 -- Set to nil to make the notification not disappear
+Fluent:Notify({
+    Title = "VL HUB",
+    Content = "O VL Hub foi carregado com sucesso!",
+    Duration = 5
+})
+
+-- Função para criar botões rápidos
+local function AddFeature(tab, title, description, callback)
+    tab:AddButton({
+        Title = title,
+        Description = description,
+        Callback = callback
     })
-
-
-
-    Tabs.Main:AddParagraph({
-        Title = "Paragraph",
-        Content = "This is a paragraph.\nSecond line!"
-    })
-
-
-
-    Tabs.Main:AddButton({
-        Title = "Button",
-        Description = "Very important button",
-        Callback = function()
-            Window:Dialog({
-                Title = "Title",
-                Content = "This is a dialog",
-                Buttons = {
-                    {
-                        Title = "Confirm",
-                        Callback = function()
-                            print("Confirmed the dialog.")
-                        end
-                    },
-                    {
-                        Title = "Cancel",
-                        Callback = function()
-                            print("Cancelled the dialog.")
-                        end
-                    }
-                }
-            })
-        end
-    })
-
-
-
-    local Toggle = Tabs.Main:AddToggle("MyToggle", {Title = "Toggle", Default = false })
-
-    Toggle:OnChanged(function()
-        print("Toggle changed:", Options.MyToggle.Value)
-    end)
-
-    Options.MyToggle:SetValue(false)
-
-
-    
-    local Slider = Tabs.Main:AddSlider("Slider", {
-        Title = "Slider",
-        Description = "This is a slider",
-        Default = 2,
-        Min = 0,
-        Max = 5,
-        Rounding = 1,
-        Callback = function(Value)
-            print("Slider was changed:", Value)
-        end
-    })
-
-    Slider:OnChanged(function(Value)
-        print("Slider changed:", Value)
-    end)
-
-    Slider:SetValue(3)
-
-
-
-    local Dropdown = Tabs.Main:AddDropdown("Dropdown", {
-        Title = "Dropdown",
-        Values = {"one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen"},
-        Multi = false,
-        Default = 1,
-    })
-
-    Dropdown:SetValue("four")
-
-    Dropdown:OnChanged(function(Value)
-        print("Dropdown changed:", Value)
-    end)
-
-
-    
-    local MultiDropdown = Tabs.Main:AddDropdown("MultiDropdown", {
-        Title = "Dropdown",
-        Description = "You can select multiple values.",
-        Values = {"one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen"},
-        Multi = true,
-        Default = {"seven", "twelve"},
-    })
-
-    MultiDropdown:SetValue({
-        three = true,
-        five = true,
-        seven = false
-    })
-
-    MultiDropdown:OnChanged(function(Value)
-        local Values = {}
-        for Value, State in next, Value do
-            table.insert(Values, Value)
-        end
-        print("Mutlidropdown changed:", table.concat(Values, ", "))
-    end)
-
-
-
-    local Colorpicker = Tabs.Main:AddColorpicker("Colorpicker", {
-        Title = "Colorpicker",
-        Default = Color3.fromRGB(96, 205, 255)
-    })
-
-    Colorpicker:OnChanged(function()
-        print("Colorpicker changed:", Colorpicker.Value)
-    end)
-    
-    Colorpicker:SetValueRGB(Color3.fromRGB(0, 255, 140))
-
-
-
-    local TColorpicker = Tabs.Main:AddColorpicker("TransparencyColorpicker", {
-        Title = "Colorpicker",
-        Description = "but you can change the transparency.",
-        Transparency = 0,
-        Default = Color3.fromRGB(96, 205, 255)
-    })
-
-    TColorpicker:OnChanged(function()
-        print(
-            "TColorpicker changed:", TColorpicker.Value,
-            "Transparency:", TColorpicker.Transparency
-        )
-    end)
-
-
-
-    local Keybind = Tabs.Main:AddKeybind("Keybind", {
-        Title = "KeyBind",
-        Mode = "Toggle", -- Always, Toggle, Hold
-        Default = "LeftControl", -- String as the name of the keybind (MB1, MB2 for mouse buttons)
-
-        -- Occurs when the keybind is clicked, Value is `true`/`false`
-        Callback = function(Value)
-            print("Keybind clicked!", Value)
-        end,
-
-        -- Occurs when the keybind itself is changed, `New` is a KeyCode Enum OR a UserInputType Enum
-        ChangedCallback = function(New)
-            print("Keybind changed!", New)
-        end
-    })
-
-    -- OnClick is only fired when you press the keybind and the mode is Toggle
-    -- Otherwise, you will have to use Keybind:GetState()
-    Keybind:OnClick(function()
-        print("Keybind clicked:", Keybind:GetState())
-    end)
-
-    Keybind:OnChanged(function()
-        print("Keybind changed:", Keybind.Value)
-    end)
-
-    task.spawn(function()
-        while true do
-            wait(1)
-
-            -- example for checking if a keybind is being pressed
-            local state = Keybind:GetState()
-            if state then
-                print("Keybind is being held down")
-            end
-
-            if Fluent.Unloaded then break end
-        end
-    end)
-
-    Keybind:SetValue("MB2", "Toggle") -- Sets keybind to MB2, mode to Hold
-
-
-    local Input = Tabs.Main:AddInput("Input", {
-        Title = "Input",
-        Default = "Default",
-        Placeholder = "Placeholder",
-        Numeric = false, -- Only allows numbers
-        Finished = false, -- Only calls callback when you press enter
-        Callback = function(Value)
-            print("Input changed:", Value)
-        end
-    })
-
-    Input:OnChanged(function()
-        print("Input updated:", Input.Value)
-    end)
 end
 
+-- **Aba Farm**
+AddFeature(Tabs.Farm, "Auto Farm de Level", "Farm com troca automática de quests e ilhas", function()
+    print("Auto Farm de Level ativado!")
+end)
 
--- Addons:
--- SaveManager (Allows you to have a configuration system)
--- InterfaceManager (Allows you to have a interface managment system)
+AddFeature(Tabs.Farm, "Auto Farm de Bosses", "Inclui Katakuri e outros bosses", function()
+    print("Auto Farm de Bosses ativado!")
+end)
 
--- Hand the library over to our managers
-SaveManager:SetLibrary(Fluent)
-InterfaceManager:SetLibrary(Fluent)
+AddFeature(Tabs.Farm, "Auto Farm de Maestria", "Farm para espadas, frutas e armas", function()
+    print("Auto Farm de Maestria ativado!")
+end)
 
--- Ignore keys that are used by ThemeManager.
--- (we dont want configs to save themes, do we?)
-SaveManager:IgnoreThemeSettings()
+AddFeature(Tabs.Farm, "Auto Farm de Fragmentos", "Farm rápido de fragmentos e moedas", function()
+    print("Auto Farm de Fragmentos ativado!")
+end)
 
--- You can add indexes of elements the save manager should ignore
-SaveManager:SetIgnoreIndexes({})
+AddFeature(Tabs.Farm, "Auto Coleta de Baús e Frutas", "Coleta automática pelo mapa", function()
+    print("Auto Coleta ativada!")
+end)
 
--- use case for doing it this way:
--- a script hub could have themes in a global folder
--- and game configs in a separate folder per game
-InterfaceManager:SetFolder("FluentScriptHub")
-SaveManager:SetFolder("FluentScriptHub/specific-game")
+AddFeature(Tabs.Farm, "Teleporte Rápido", "Teleporte entre ilhas e bosses", function()
+    print("Teleporte rápido ativado!")
+end)
 
-InterfaceManager:BuildInterfaceSection(Tabs.Settings)
-SaveManager:BuildConfigSection(Tabs.Settings)
+-- **Aba Quests**
+AddFeature(Tabs.Quests, "Auto Quest de Itens", "Coleta automática de itens raros", function()
+    print("Auto Quest de Itens ativado!")
+end)
 
+AddFeature(Tabs.Quests, "Auto Quest Principal", "Avança automaticamente nas quests principais", function()
+    print("Auto Quest Principal ativado!")
+end)
+
+AddFeature(Tabs.Quests, "Auto Raid e Awaken", "Farm de raids e despertar frutas", function()
+    print("Auto Raid e Awaken ativado!")
+end)
+
+-- **Aba Extras**
+local AutoDragonHeartButton = Tabs.Extras:AddButton({
+    Title = "Auto Dragon Heart",
+    Description = "Farm exclusivo para Dragon Heart",
+    Callback = function()
+        print("Auto Dragon Heart ativado!")
+    end
+})
+AutoDragonHeartButton:SetTextColor(Color3.fromRGB(255, 0, 0))
+
+local AutoEvolucaoRacasButton = Tabs.Extras:AddButton({
+    Title = "Auto Evolução de Raças",
+    Description = "Farm para evoluir raças",
+    Callback = function()
+        print("Auto Evolução de Raças ativado!")
+    end
+})
+AutoEvolucaoRacasButton:SetTextColor(Color3.fromRGB(0, 255, 0))
+
+AddFeature(Tabs.Extras, "Auto Kill Aura (Fast Attack)", "Ataque rápido automático", function()
+    print("Auto Fast Attack ativado!")
+end)
+
+AddFeature(Tabs.Extras, "Auto Haki (Ken/Buso)", "Ativa e farma Haki automaticamente", function()
+    print("Auto Haki ativado!")
+end)
+
+AddFeature(Tabs.Extras, "Auto Upgrade de Status", "Distribui status automaticamente", function()
+    print("Auto Upgrade ativado!")
+end)
+
+-- **Modo Seguro com animação neon**
+local SafeMode = Tabs.Extras:AddToggle("SafeMode", { Title = "Modo Seguro (Anti-PVP)", Default = false })
+
+SafeMode:OnChanged(function(state)
+    if state then
+        print("Modo Seguro ativado!")
+        game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 20
+        game.Players.LocalPlayer.Character.Humanoid.JumpPower = 50
+        game.Players.LocalPlayer.PlayerGui.ScreenGui.Enabled = true
+        -- Efeito Neon roxo pulsante
+        local gui = Instance.new("ScreenGui", game.Players.LocalPlayer.PlayerGui)
+        local frame = Instance.new("Frame", gui)
+        frame.BackgroundColor3 = Color3.fromRGB(128, 0, 128)
+        frame.Size = UDim2.new(1, 0, 1, 0)
+        frame.BackgroundTransparency = 0.7
+
+        task.spawn(function()
+            while SafeMode.Value do
+                frame.BackgroundTransparency = math.random(0.3, 0.7)
+                task.wait(0.3)
+            end
+            frame:Destroy()
+        end)
+
+    else
+        print("Modo Seguro desativado!")
+        game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 16
+        game.Players.LocalPlayer.Character.Humanoid.JumpPower = 50
+    end
+end)
+
+-- **Aba Configurações**
+AddFeature(Tabs.Config, "Anti-AFK e Reconexão", "Evita ser desconectado e reconecta sozinho", function()
+    print("Anti-AFK ativado!")
+end)
+
+AddFeature(Tabs.Config, "Salvar/Carregar Config", "Guarda suas configurações favoritas", function()
+    print("Configuração salva!")
+end)
+
+AddFeature(Tabs.Config, "Keybinds Personalizados", "Define atalhos para as funções", function()
+    print("Keybinds ativado!")
+end)
+
+AddFeature(Tabs.Config, "Troca de Tema", "Altera a aparência do hub", function()
+    print("Tema trocado!")
+end)
+
+-- Finalização e carregamento das configurações salvas
+InterfaceManager:SetFolder("VLHUB")
+SaveManager:SetFolder("VLHUB/specific-game")
+
+InterfaceManager:BuildInterfaceSection(Tabs.Config)
+SaveManager:BuildConfigSection(Tabs.Config)
 
 Window:SelectTab(1)
 
 Fluent:Notify({
     Title = "VL HUB",
-    Content = "The VL Hub has been loaded.",
+    Content = "VL HUB pronto para farmar!",
     Duration = 8
 })
 
--- You can use the SaveManager:LoadAutoloadConfig() to load a config
--- which has been marked to be one that auto loads!
 SaveManager:LoadAutoloadConfig()
