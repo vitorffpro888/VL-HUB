@@ -1,16 +1,24 @@
--- 🛠️ SPOCK HUB - FRUIT FARM ULTIMATE V5
+-- 🛠️ SPOCK HUB - FRUIT FARM ULTIMATE V6
 -- By Spock
 
+-- 🔧 Serviços e Variáveis
 local player = game.Players.LocalPlayer
 local replicatedStorage = game:GetService("ReplicatedStorage")
 local teleportService = game:GetService("TeleportService")
-local httpService = game:GetService("HttpService")
+local virtualUser = game:GetService("VirtualUser")
 local userInputService = game:GetService("UserInputService")
+local httpService = game:GetService("HttpService")
 
--- 🔧 Função para carregar configuração do arquivo TXT
+-- 🔍 Função para carregar configuração do arquivo TXT
 local function loadConfig()
-    local configFile = "config.txt"
-    local configData = {}
+    local configFile = "spockhub_config.txt"
+    local configData = {
+        autoRandomFruit = true,
+        autoFindFruit = true,
+        autoChestFarm = true,
+        teamChoice = "Pirates",
+        scanInterval = 5
+    }
 
     if isfile(configFile) then
         for line in readfile(configFile):gmatch("[^\r\n]+") do
@@ -20,14 +28,8 @@ local function loadConfig()
             end
         end
     else
-        warn("⚠️ Arquivo config.txt não encontrado! Usando configurações padrão.")
-        configData = {
-            autoRandomFruit = true,
-            autoFindFruit = true,
-            autoChestFarm = true,
-            teamChoice = "Pirates",
-            scanInterval = 5
-        }
+        writefile(configFile, httpService:JSONEncode(configData))
+        print("🔧 Arquivo de configuração criado!")
     end
 
     return configData
@@ -35,7 +37,7 @@ end
 
 local config = loadConfig()
 
--- 🎯 Criando UI
+-- 🎯 Criando Interface
 local ui = Instance.new("ScreenGui", player.PlayerGui)
 ui.Name = "SPOCK_HUB_UI"
 
@@ -124,7 +126,6 @@ end)
 
 -- 💤 Anti AFK
 player.Idled:Connect(function()
-    local virtualUser = game:GetService("VirtualUser")
     virtualUser:Button2Down(Vector2.new(0, 0), workspace.CurrentCamera.CFrame)
     wait(1)
     virtualUser:Button2Up(Vector2.new(0, 0), workspace.CurrentCamera.CFrame)
@@ -141,4 +142,4 @@ spawn(function()
     end
 end)
 
-print("✅ SPOCK HUB V5 carregado com tudo integrado!")
+print("✅ SPOCK HUB V6 carregado com tudo integrado e otimizado!")
