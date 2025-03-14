@@ -1,171 +1,322 @@
-local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
-local SaveManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/master/Addons/SaveManager.lua"))()
-local InterfaceManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/master/Addons/InterfaceManager.lua"))()
+repeat task.wait() until game:IsLoaded() and game:GetService("Players").LocalPlayer
 
-local Window = Fluent:CreateWindow({
-    Title = "VL HUB" .. Fluent.Version,
-    SubTitle = "by vitor and lucas!",
-    TabWidth = 160,
-    Size = UDim2.fromOffset(580, 460),
-    Acrylic = true,
-    Theme = "Dark",
-    MinimizeKey = Enum.KeyCode.LeftControl
+local Players, ReplicatedStorage, TweenService, HttpService, TeleportService = 
+    game:GetService("Players"), 
+    game:GetService("ReplicatedStorage"),
+    game:GetService("TweenService"),
+    game:GetService("HttpService"),
+    game:GetService("TeleportService")
+
+local plr = Players.LocalPlayer
+local Config = setmetatable({
+    AutoFruit = true,
+    AutoStoreFruit = true,
+    FruitLog = {}
+}, {
+    __index = _G,
+    __newindex = function(t, k, v)
+        _G[k] = v
+        rawset(t, k, v)
+    end
 })
 
-local Tabs = {
-    Farm = Window:AddTab({ Title = "Farm", Icon = "sword" }),
-    Quests = Window:AddTab({ Title = "Quests", Icon = "book-open" }),
-    Extras = Window:AddTab({ Title = "Extras", Icon = "star" }),
-    Config = Window:AddTab({ Title = "Config", Icon = "settings" })
-}
-
-local Options = Fluent.Options
-
-Fluent:Notify({
-    Title = "VL HUB",
-    Content = "O VL Hub foi carregado com sucesso!",
-    Duration = 5
-})
-
--- Função para criar botões rápidos
-local function AddFeature(tab, title, description, callback)
-    tab:AddButton({
-        Title = title,
-        Description = description,
-        Callback = callback
-    })
+local function JoinTeam()
+    if plr.Team ~= game.Teams.Marines and plr.Team ~= game.Teams.Pirates then
+        ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("CommF_"):InvokeServer("SetTeam", "Marines")
+    end
 end
 
--- **Aba Farm**
-AddFeature(Tabs.Farm, "Auto Farm de Level", "Farm com troca automática de quests e ilhas", function()
-    print("Auto Farm de Level ativado!")
-end)
+JoinTeam()
 
-AddFeature(Tabs.Farm, "Auto Farm de Bosses", "Inclui Katakuri e outros bosses", function()
-    print("Auto Farm de Bosses ativado!")
-end)
-
-AddFeature(Tabs.Farm, "Auto Farm de Maestria", "Farm para espadas, frutas e armas", function()
-    print("Auto Farm de Maestria ativado!")
-end)
-
-AddFeature(Tabs.Farm, "Auto Farm de Fragmentos", "Farm rápido de fragmentos e moedas", function()
-    print("Auto Farm de Fragmentos ativado!")
-end)
-
-AddFeature(Tabs.Farm, "Auto Coleta de Baús e Frutas", "Coleta automática pelo mapa", function()
-    print("Auto Coleta ativada!")
-end)
-
-AddFeature(Tabs.Farm, "Teleporte Rápido", "Teleporte entre ilhas e bosses", function()
-    print("Teleporte rápido ativado!")
-end)
-
--- **Aba Quests**
-AddFeature(Tabs.Quests, "Auto Quest de Itens", "Coleta automática de itens raros", function()
-    print("Auto Quest de Itens ativado!")
-end)
-
-AddFeature(Tabs.Quests, "Auto Quest Principal", "Avança automaticamente nas quests principais", function()
-    print("Auto Quest Principal ativado!")
-end)
-
-AddFeature(Tabs.Quests, "Auto Raid e Awaken", "Farm de raids e despertar frutas", function()
-    print("Auto Raid e Awaken ativado!")
-end)
-
--- **Aba Extras**
-local AutoDragonHeartButton = Tabs.Extras:AddButton({
-    Title = "Auto Dragon Heart",
-    Description = "Farm exclusivo para Dragon Heart",
-    Callback = function()
-        print("Auto Dragon Heart ativado!")
+local function LoadFruitLog()
+    if isfile("fruitlog.json") then
+        Config.FruitLog = HttpService:JSONDecode(readfile("fruitlog.json"))
     end
-})
-AutoDragonHeartButton:SetTextColor(Color3.fromRGB(255, 0, 0))
+end
 
-local AutoEvolucaoRacasButton = Tabs.Extras:AddButton({
-    Title = "Auto Evolução de Raças",
-    Description = "Farm para evoluir raças",
-    Callback = function()
-        print("Auto Evolução de Raças ativado!")
+local function SaveFruitLog()
+    writefile("fruitlog.json", HttpService:JSONEncode(Config.FruitLog))
+end
+
+local function LogFruit(fruitName)
+    table.insert(Config.FruitLog, {
+        fruit = fruitName,
+        time = os.date("%Y-%m-%d %H:%M:%S")
+    })
+    SaveFruitLog()
+end
+
+task.wait(1)
+
+local function FindBasePart(model)
+    for _, v in ipairs(model:GetDescendants()) do
+        if v:IsA("BasePart") then return v end
     end
-})
-AutoEvolucaoRacasButton:SetTextColor(Color3.fromRGB(0, 255, 0))
+end
 
-AddFeature(Tabs.Extras, "Auto Kill Aura (Fast Attack)", "Ataque rápido automático", function()
-    print("Auto Fast Attack ativado!")
-end)
-
-AddFeature(Tabs.Extras, "Auto Haki (Ken/Buso)", "Ativa e farma Haki automaticamente", function()
-    print("Auto Haki ativado!")
-end)
-
-AddFeature(Tabs.Extras, "Auto Upgrade de Status", "Distribui status automaticamente", function()
-    print("Auto Upgrade ativado!")
-end)
-
--- **Modo Seguro com animação neon**
-local SafeMode = Tabs.Extras:AddToggle("SafeMode", { Title = "Modo Seguro (Anti-PVP)", Default = false })
-
-SafeMode:OnChanged(function(state)
-    if state then
-        print("Modo Seguro ativado!")
-        game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 20
-        game.Players.LocalPlayer.Character.Humanoid.JumpPower = 50
-        game.Players.LocalPlayer.PlayerGui.ScreenGui.Enabled = true
-        -- Efeito Neon roxo pulsante
-        local gui = Instance.new("ScreenGui", game.Players.LocalPlayer.PlayerGui)
-        local frame = Instance.new("Frame", gui)
-        frame.BackgroundColor3 = Color3.fromRGB(128, 0, 128)
-        frame.Size = UDim2.new(1, 0, 1, 0)
-        frame.BackgroundTransparency = 0.7
-
-        task.spawn(function()
-            while SafeMode.Value do
-                frame.BackgroundTransparency = math.random(0.3, 0.7)
-                task.wait(0.3)
+local function CollectItem(item)
+    if not item then return false end
+    
+    if item:IsA("Tool") then
+        local handle = item:FindFirstChild("Handle")
+        if handle then
+            handle.CFrame = plr.Character.HumanoidRootPart.CFrame
+            if not item:IsDescendantOf(workspace) then
+                LogFruit(item.Name)
+                return true
             end
-            frame:Destroy()
-        end)
+        end
+    elseif item:IsA("Model") and (item.Name == "Fruit" or item.Name == "fruit") then
+        local basePart = FindBasePart(item)
+        if basePart then
+            local startTime = tick()
+            repeat
+                if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+                    plr.Character.HumanoidRootPart.CFrame = CFrame.new(basePart.Position + Vector3.new(0, 3, 0))
+                end
+                task.wait()
+                if not item:IsDescendantOf(workspace) then
+                    LogFruit("Model Fruit")
+                    return true
+                end
+            until tick() - startTime > 10
+        end
+    end
+    return false
+end
 
-    else
-        print("Modo Seguro desativado!")
-        game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 16
-        game.Players.LocalPlayer.Character.Humanoid.JumpPower = 50
+local function CreateUI()
+    local ui = {}
+    local ScreenGui = Instance.new("ScreenGui", game:GetService("CoreGui"))
+    local MainFrame = Instance.new("Frame", ScreenGui)
+    local TopBar = Instance.new("Frame", MainFrame)
+    local LogFrame = Instance.new("ScrollingFrame", MainFrame)
+    local StatusLabel = Instance.new("TextLabel")
+    
+    MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
+    MainFrame.Position = UDim2.new(0.8, -150, 0.5, -150)
+    MainFrame.Size = UDim2.new(0, 300, 0, 300)
+    Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 10)
+    
+    TopBar.BackgroundColor3 = Color3.fromRGB(40, 40, 45)
+    TopBar.Size = UDim2.new(1, 0, 0, 50)
+    
+    local Title = Instance.new("TextLabel", TopBar)
+    Title.BackgroundTransparency = 1
+    Title.Position = UDim2.new(0, 15, 0, 0)
+    Title.Size = UDim2.new(1, -30, 1, 0)
+    Title.Font = Enum.Font.GothamBold
+    Title.Text = "SPOCK HUB FRUIT FINDER 2025"
+    Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Title.TextSize = 22
+    Title.TextXAlignment = Enum.TextXAlignment.Left
+    
+    local ToggleButton = Instance.new("TextButton", MainFrame)
+    ToggleButton.BackgroundColor3 = Color3.fromRGB(65, 165, 65)
+    ToggleButton.Position = UDim2.new(0.5, -75, 0, 70)
+    ToggleButton.Size = UDim2.new(0, 150, 0, 35)
+    ToggleButton.Font = Enum.Font.GothamSemibold
+    ToggleButton.Text = "Running"
+    ToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    ToggleButton.TextSize = 16
+    Instance.new("UICorner", ToggleButton)
+    
+    local StatusFrame = Instance.new("Frame", MainFrame)
+    StatusFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 40)
+    StatusFrame.Position = UDim2.new(0, 15, 0, 120)
+    StatusFrame.Size = UDim2.new(1, -30, 0, 40)
+    
+    StatusLabel.Parent = StatusFrame
+    StatusLabel.BackgroundTransparency = 1
+    StatusLabel.Size = UDim2.new(1, 0, 1, 0)
+    StatusLabel.Font = Enum.Font.GothamMedium
+    StatusLabel.Text = "Status: Searching..."
+    StatusLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    StatusLabel.TextSize = 14
+    
+    LogFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 40)
+    LogFrame.Position = UDim2.new(0, 15, 0, 170)
+    LogFrame.Size = UDim2.new(1, -30, 0, 120)
+    LogFrame.ScrollBarThickness = 6
+    LogFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
+    
+    local UserInputService = game:GetService("UserInputService")
+    local dragging, dragStart, startPos
+    
+    TopBar.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true
+            dragStart = input.Position
+            startPos = MainFrame.Position
+        end
+    end)
+    
+    UserInputService.InputChanged:Connect(function(input)
+        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+            local delta = input.Position - dragStart
+            MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        end
+    end)
+    
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = false
+        end
+    end)
+    
+    ToggleButton.MouseButton1Click:Connect(function()
+        Config.AutoFruit = not Config.AutoFruit
+        Config.AutoStoreFruit = Config.AutoFruit
+        ToggleButton.Text = Config.AutoFruit and "Running" or "Stopped"
+        ToggleButton.BackgroundColor3 = Config.AutoFruit and Color3.fromRGB(65, 165, 65) or Color3.fromRGB(165, 65, 65)
+    end)
+    
+    function ui.updateLog()
+        for _, child in ipairs(LogFrame:GetChildren()) do
+            child:Destroy()
+        end
+        
+        local fruitCounts = {}
+        for _, entry in ipairs(Config.FruitLog) do
+            fruitCounts[entry.fruit] = fruitCounts[entry.fruit] or {count = 0, lastTime = entry.time}
+            fruitCounts[entry.fruit].count += 1
+            fruitCounts[entry.fruit].lastTime = entry.time
+        end
+        
+        local sortedFruits = {}
+        for fruit, data in pairs(fruitCounts) do
+            table.insert(sortedFruits, {
+                name = fruit,
+                count = data.count,
+                lastTime = data.lastTime
+            })
+        end
+        
+        table.sort(sortedFruits, function(a, b)
+            return a.lastTime > b.lastTime
+        end)
+        
+        for i, data in ipairs(sortedFruits) do
+            local label = Instance.new("TextLabel", LogFrame)
+            label.BackgroundTransparency = 1
+            label.Position = UDim2.new(0, 5, 0, 5 + (i-1)*25)
+            label.Size = UDim2.new(1, -10, 0, 20)
+            label.Font = Enum.Font.GothamMedium
+            label.TextColor3 = Color3.fromRGB(255, 255, 255)
+            label.TextSize = 14
+            label.TextXAlignment = Enum.TextXAlignment.Left
+            label.Text = data.count > 1 and 
+                string.format("%s (%d) - %s", data.name, data.count, data.lastTime) or
+                string.format("%s - %s", data.name, data.lastTime)
+        end
+    end
+    
+    ui.updateStatus = function(status)
+        StatusLabel.Text = "Status: " .. status
+    end
+    
+    LoadFruitLog()
+    ui.updateLog()
+    
+    return ui
+end
+
+local function HandleAutoStore(tool)
+    if Config.AutoStoreFruit and tool:IsA("Tool") and tool.Name:find("Fruit") then
+        task.spawn(function()
+            ReplicatedStorage.Remotes.CommF_:InvokeServer("StoreFruit", tool:GetAttribute("OriginalName"), tool)
+        end)
+    end
+end
+
+local function StartFruitFinder()
+    local ui = CreateUI()
+    local lastServerHop = tick()
+    local collecting = false
+    
+    while task.wait() do
+        if Config.AutoFruit and not collecting then
+            pcall(function()
+                local foundFruit = false
+                local collected = false
+                
+                for _, v in ipairs(workspace:GetChildren()) do
+                    if v:IsA("Tool") and v.Name:find("fruit") then
+                        foundFruit = true
+                        collecting = true
+                        ui.updateStatus("Found Tool Fruit: " .. v.Name)
+                        
+                        if CollectItem(v) then
+                            collected = true
+                            ui.updateLog()
+                        end
+                        
+                        collecting = false
+                        break
+                    end
+                end
+                
+                if not collected then
+                    for _, v in ipairs(workspace:GetChildren()) do
+                        if v:IsA("Model") and (v.Name == "Fruit" or v.Name == "fruit") then
+                            foundFruit = true
+                            collecting = true
+                            ui.updateStatus("Found Model Fruit")
+                            
+                            if CollectItem(v) then
+                                collected = true
+                                ui.updateLog()
+                            end
+                            
+                            collecting = false
+                            break
+                        end
+                    end
+                end
+                
+                if collected and Config.AutoStoreFruit then
+                    ui.updateStatus("Storing Fruits")
+                    task.wait(1)
+                end
+                
+                if not foundFruit and tick() - lastServerHop >= 3 then
+                    ui.updateStatus("Server Hopping...")
+                    task.wait(1)
+                    lastServerHop = tick()
+                    
+                    local servers = HttpService:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?sortOrder=Asc&limit=100"))
+                    local server = servers.data[math.random(1, #servers.data)]
+                    if server then
+                        TeleportService:TeleportToPlaceInstance(game.PlaceId, server.id)
+                    end
+                end
+            end)
+        end
+    end
+end
+
+task.spawn(function()
+    while task.wait() do
+        if Config.AutoStoreFruit then
+            pcall(function()
+                for _, fr in ipairs(plr.Backpack:GetChildren()) do
+                    HandleAutoStore(fr)
+                end
+                for _, fr in ipairs(plr.Character:GetChildren()) do
+                    HandleAutoStore(fr)
+                end
+            end)
+        end
     end
 end)
 
--- **Aba Configurações**
-AddFeature(Tabs.Config, "Anti-AFK e Reconexão", "Evita ser desconectado e reconecta sozinho", function()
-    print("Anti-AFK ativado!")
+plr.CharacterAdded:Connect(function(char)
+    char.ChildAdded:Connect(HandleAutoStore)
 end)
 
-AddFeature(Tabs.Config, "Salvar/Carregar Config", "Guarda suas configurações favoritas", function()
-    print("Configuração salva!")
-end)
+if plr.Character then
+    plr.Character.ChildAdded:Connect(HandleAutoStore)
+end
 
-AddFeature(Tabs.Config, "Keybinds Personalizados", "Define atalhos para as funções", function()
-    print("Keybinds ativado!")
-end)
-
-AddFeature(Tabs.Config, "Troca de Tema", "Altera a aparência do hub", function()
-    print("Tema trocado!")
-end)
-
--- Finalização e carregamento das configurações salvas
-InterfaceManager:SetFolder("VLHUB")
-SaveManager:SetFolder("VLHUB/specific-game")
-
-InterfaceManager:BuildInterfaceSection(Tabs.Config)
-SaveManager:BuildConfigSection(Tabs.Config)
-
-Window:SelectTab(1)
-
-Fluent:Notify({
-    Title = "VL HUB",
-    Content = "VL HUB pronto para farmar!",
-    Duration = 8
-})
-
-SaveManager:LoadAutoloadConfig()
+print("NIGGAAA")
+StartFruitFinder()
